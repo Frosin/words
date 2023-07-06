@@ -1,0 +1,17 @@
+[Unit]
+Description=words service
+Wants=network-online.target
+After=network.target
+
+[Service]
+Type=simple
+User=pi     
+Group=pi
+WorkingDirectory=/home/pi/WORDS/
+ExecStart=/home/pi/WORDS/words
+StandardOutput=file:/home/pi/words.log
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

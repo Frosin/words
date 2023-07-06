@@ -1,0 +1,60 @@
+{
+    "pages": [
+        {
+            "name": "base",
+            "first": true,
+            "handler": "Base",
+            "start_keyboard": {
+                "buttons": [
+                    {
+                        "text": "settings",
+                        "handler": "Settings"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "settings",
+            "first": false,
+            "handler": "Settings",
+            "start_keyboard": {
+                "buttons": [
+                    {
+                        "text": "↩ go back",
+                        "handler": "Base"
+                    },
+                    {
+                        "text": "⇈ phrase count",
+                        "handler": "Settings_up"
+                    },
+                    {
+                        "text": "⇊ phrase count",
+                        "handler": "Settings_down"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "page_reminder",
+            "first": false,
+            "handler": "Page_reminder",
+            "start_keyboard": {
+                "buttons": [
+                    {
+                        "text": "Инфо запоминания",
+                        "handler": "Page_reminder"
+                    }
+                ]
+            }
+        }
+    ],
+    "workers": [
+        {
+            "name": "reminder",
+            "page": "page_reminder",
+            "period": "10s",
+            "time": "12:00",
+            "worker_handler": "Reminder"
+        }
+    ]
+}
