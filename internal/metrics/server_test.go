@@ -13,6 +13,8 @@ import (
 func TestMetricsServer(t *testing.T) {
 	RunMetrics()
 
+	time.Sleep(time.Millisecond * 100)
+
 	WordsOperationResults.Add(777)
 
 	client := http.Client{

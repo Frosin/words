@@ -43,28 +43,39 @@ func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, erro
 	return phrase.ID, nil
 }
 
+// select * from phrases p
+// join sessions s on s.user_id = p.user_id
+// join user_settings us on us.user_id = p.user_id
+// Where
+// (epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002
+// Or (epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)
+// Or (epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)
+// Or (epoch = 3 AND (julianday('now') - julianday(updated_at)) * 24 > 24*3))
+// And
+// current_word_num < phrase_day_limit
+// group by p.user_id
 func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error) {
 	phrases := []*entity.Phrase{}
 
-	// нужно поправить запрос
-	// - ограничение на количество присылаемых сообщений в день (можно проверить уже присланные по дате апдейта)
-	// - установить интервал посылки
-	// - + переменная - количество прысылаемых за раз слов
-
-	// добавить метрики на ошибки для нормальной отладки
-
 	err := r.db.Debug().WithContext(ctx).
 		Table(phrasesTable).
-		//Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
+		Joins("join sessions s on s.user_id = phrases.user_id").
+		Joins("join user_settings us on us.user_id = phrases.user_id").
 		// for tests
-		Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
-		// Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`). // after 1 day
-		// Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).      // after 2 weeks
-		// Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`).      // after 2 months
-		//Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`).
-		Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`).
-		Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)`).
-		Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) * 24 > 24*3)`).
+		Where(
+			r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
+														Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`). // after 1 day
+														Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).      // after 2 weeks
+														Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`)).     // after 2 months
+		// r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
+		// 	Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) > 0.0004)`)).
+		//
+		//Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`).
+		//Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)`).
+		//Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) * 24 > 24*3)`)).
+		Where("current_phrase_num < phrase_day_limit").
+		Order("epoch desc").
+		Order("created_at desc").
 		Scan(&phrases).Error
 
 	if err != nil {
@@ -72,4 +83,19 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 	}
 
 	return phrases, nil
+}
+
+func (r *Repo) ClearUsersDayLimits(ctx context.Context) error {
+	err := r.db.Debug().WithContext(ctx).
+		Exec(`
+		update sessions 
+		set current_day = strftime('%d','now'), current_phrase_num = 0
+		where current_day != strftime('%d','now') 
+		`).Error
+
+	if err != nil {
+		return fmt.Errorf("ClearUsersDayLimits: %w", err)
+	}
+
+	return nil
 }

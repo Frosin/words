@@ -7,11 +7,16 @@ import (
 	"log"
 	"test/internal/entity"
 	"test/internal/metrics"
+	"test/internal/usecase"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 func convertKeyboard(kbd entity.Keyboard) *tgbotapi.InlineKeyboardMarkup {
+	if len(kbd.Buttons) == 0 {
+		return nil
+	}
+
 	controlButtons := []tgbotapi.InlineKeyboardButton{}
 	for _, btn := range kbd.Buttons {
 		controlButtons = append(
@@ -82,6 +87,21 @@ func (p *Processor) handleUpdate(update tgbotapi.Update) error {
 		return fmt.Errorf("get session error: %w", err)
 	}
 
+	// check for first settings
+	settings, err := p.repo.GetSettings(ctx, int64(fromUser.ID))
+	switch {
+	case settings == nil && err == nil:
+		settings := entity.UserSettings{
+			UserID:         int64(fromUser.ID),
+			PhraseDayLimit: usecase.DefaultPhrasesNum,
+		}
+		if err := p.repo.SaveSettings(ctx, settings); err != nil {
+			return fmt.Errorf("save first settings error: %w", err)
+		}
+	case err != nil:
+		return fmt.Errorf("get settings error: %w", err)
+	}
+
 	sessData, err := session.Data.GetSessionData()
 	if err != nil {
 		return fmt.Errorf("get session data error: %w", err)
@@ -102,6 +122,8 @@ func (p *Processor) handleUpdate(update tgbotapi.Update) error {
 		handlerPage.StartKeyboard,
 		int64(fromUser.ID),
 		sessData,
+		session.CurrentPhraseNum,
+		session.CurrentDay,
 	)
 
 	output := handler(input)
@@ -138,6 +160,24 @@ func (p *Processor) handleUpdate(update tgbotapi.Update) error {
 	// 	response = resp
 	// }
 
+	// delete keyboard from last message
+	if session.LastMsgHasKbd {
+		previous := tgbotapi.NewEditMessageReplyMarkup(
+			chatID,
+			session.LastMsgID,
+			tgbotapi.InlineKeyboardMarkup{
+				InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{},
+			},
+		)
+		_, err = p.bot.Send(previous)
+		if err != nil {
+			log.Println("error sending clear previous msg")
+
+			return err
+		}
+	}
+
+	// send new message
 	mess, err := p.bot.Send(response)
 	if err != nil {
 		log.Println("error sending msg")
@@ -156,6 +196,17 @@ func (p *Processor) handleUpdate(update tgbotapi.Update) error {
 
 	session.ChatID = chatID
 	session.Data = rawSessData
+
+	if output.GetCurrentDay() != 0 {
+		session.CurrentPhraseNum = output.GetCurrentPhraseNum()
+		session.CurrentDay = output.GetCurrentDay()
+	}
+
+	if keyboard != nil {
+		session.LastMsgHasKbd = true
+	} else {
+		session.LastMsgHasKbd = false
+	}
 
 	// save session
 	if err := p.repo.SaveSession(ctx, *session); err != nil {

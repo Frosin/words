@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"test/internal/entity"
 )
 
@@ -10,48 +9,35 @@ const (
 	DefaultPhrasesNum = 3
 )
 
-func (u *Uc) SetPhrasesNum(ctx context.Context, userID int64, num int) error {
-	settings := entity.Settings{
-		Langs: []entity.LangSettings{
-			{
-				LangID:    0,
-				PhraseNum: uint8(num),
-			},
-		},
+func (u *Uc) SetPhrasesDayLimit(ctx context.Context, userID int64, limit int) error {
+	settings := entity.UserSettings{
+		UserID:         userID,
+		PhraseDayLimit: uint8(limit),
 	}
 
-	serialized, err := settings.Serialize()
-	if err != nil {
-		return err
-	}
-
-	return u.repo.SaveSettings(ctx, userID, serialized)
+	return u.repo.SaveSettings(ctx, settings)
 }
 
-func (u *Uc) GetPhrasesNum(ctx context.Context, userID int64) (int, error) {
-	serialized, err := u.repo.GetSettings(ctx, userID)
+func (u *Uc) GetPhrasesDayLimit(ctx context.Context, userID int64) (int, error) {
+	settings, err := u.repo.GetSettings(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
 
 	// if settings not found, we should create it
-	if serialized == nil && err == nil {
-		err := u.SetPhrasesNum(ctx, userID, DefaultPhrasesNum)
+	if settings == nil && err == nil {
+		err := u.SetPhrasesDayLimit(ctx, userID, DefaultPhrasesNum)
 		if err != nil {
 			return 0, err
+		}
+
+		settings = &entity.UserSettings{
+			UserID:         userID,
+			PhraseDayLimit: DefaultPhrasesNum,
 		}
 
 		return DefaultPhrasesNum, nil
 	}
 
-	settings, err := entity.DeserializeSettings(serialized)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(settings.Langs) == 0 {
-		return 0, fmt.Errorf("not found langs settings of user=%d", userID)
-	}
-
-	return int(settings.Langs[0].PhraseNum), nil
+	return int(settings.PhraseDayLimit), nil
 }

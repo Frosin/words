@@ -8,6 +8,9 @@ type OutputObject struct {
 	userID    int64
 	cache     SessionData
 	goToStart bool
+	// fields for session
+	currentPhraseNum int
+	currentDay       int
 }
 
 func NewOutput() Output {
@@ -74,4 +77,24 @@ func (o *OutputObject) SetGoToStart() Output {
 
 func (o *OutputObject) GetGoToStart() bool {
 	return o.goToStart
+}
+
+func (o *OutputObject) SetCurrentPhraseNum(num int) Output {
+	o.currentPhraseNum = num
+
+	return o
+}
+
+func (o *OutputObject) SetCurrentDay(day int) Output {
+	o.currentDay = day
+
+	return o
+}
+
+func (o *OutputObject) GetCurrentPhraseNum() int {
+	return o.currentPhraseNum
+}
+
+func (o *OutputObject) GetCurrentDay() int {
+	return o.currentDay
 }

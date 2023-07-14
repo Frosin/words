@@ -19,9 +19,6 @@ type ServiceConfig interface {
 	GetBotConfigFileName() string
 }
 
-// type FakeServiceCfg struct {
-// }
-
 type SConfig struct {
 	DBTimeoutSec      int    `json:"db_timeout"`
 	DBFileName        string `json:"db_filename"`
@@ -55,10 +52,6 @@ func (sc *SConfig) DBTimeout() time.Duration {
 func (sc *SConfig) GetBotConfigFileName() string {
 	return sc.BotConfigFileName
 }
-
-// func (f *FakeServiceCfg) DBTimeout() time.Duration {
-// 	return time.Second
-// }
 
 func (c *SConfig) initConfig(cfgFile string) error {
 	file := defaultConfigFile

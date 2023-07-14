@@ -12,7 +12,7 @@ func (h *Handlers) Settings(input entity.Input) entity.Output {
 	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 	defer cancel()
 
-	phrasesNum, err := h.uc.GetPhrasesNum(ctx, input.GetUserID())
+	phrasesNum, err := h.uc.GetPhrasesDayLimit(ctx, input.GetUserID())
 	if err != nil {
 		out.SetError(fmt.Errorf("get phrases num error :%w", err))
 	}
@@ -32,14 +32,14 @@ func (h *Handlers) Settings_up(input entity.Input) entity.Output {
 	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 	defer cancel()
 
-	phrasesNum, err := h.uc.GetPhrasesNum(ctx, input.GetUserID())
+	phrasesNum, err := h.uc.GetPhrasesDayLimit(ctx, input.GetUserID())
 	if err != nil {
 		out.SetError(fmt.Errorf("get phrases num error :%w", err))
 	}
 
 	phrasesNum = phrasesNum + 1
 
-	if err := h.uc.SetPhrasesNum(ctx, input.GetUserID(), phrasesNum); err != nil {
+	if err := h.uc.SetPhrasesDayLimit(ctx, input.GetUserID(), phrasesNum); err != nil {
 		out.SetError(fmt.Errorf("set phrases num error :%w", err))
 	}
 
@@ -58,14 +58,14 @@ func (h *Handlers) Settings_down(input entity.Input) entity.Output {
 	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 	defer cancel()
 
-	phrasesNum, err := h.uc.GetPhrasesNum(ctx, input.GetUserID())
+	phrasesNum, err := h.uc.GetPhrasesDayLimit(ctx, input.GetUserID())
 	if err != nil {
 		out.SetError(fmt.Errorf("get phrases num error :%w", err))
 	}
 
 	phrasesNum = phrasesNum - 1
 
-	if err := h.uc.SetPhrasesNum(ctx, input.GetUserID(), phrasesNum); err != nil {
+	if err := h.uc.SetPhrasesDayLimit(ctx, input.GetUserID(), phrasesNum); err != nil {
 		out.SetError(fmt.Errorf("set phrases num error :%w", err))
 	}
 

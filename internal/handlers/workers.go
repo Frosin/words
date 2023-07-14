@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"test/internal/entity"
+	"time"
 )
 
 const remindMsgtemplate = `Напишите предложение содержащее "%s"`
@@ -12,6 +13,13 @@ func (h *Handlers) Reminder(worker entity.Worker) ([]entity.Output, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 	defer cancel()
 
+	// clear current session limits
+	err := h.uc.ClearUsersDayLimits(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("ClearUsersDayLimits error :%w", err)
+	}
+
+	// phrases ordered by user
 	userPhrases, err := h.uc.GetReminderPhrases(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetReminderPhrases error :%w", err)
@@ -89,6 +97,22 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 		h.uc.UpdatePhrase(ctx, input.GetUserID(), phrase, data.Content)
 		out.SetMessage("Предложение сохранено")
 
+		// phrases limit logic:
+		// check session day
+		// and increase current words num
+		// or set it to zero
+		curDay := time.Now().UTC().Day()
+
+		sessCurDay := input.GetCurrentDay()
+		sessCurWordsNum := input.GetCurrentPhraseNum()
+		if curDay != sessCurDay {
+			out.SetCurrentDay(curDay)
+			out.SetCurrentPhraseNum(1)
+		} else {
+			out.SetCurrentDay(curDay)
+			out.SetCurrentPhraseNum(sessCurWordsNum + 1)
+		}
+
 	case entity.DataTypeCmd:
 		// create settings for user
 		ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
@@ -106,7 +130,8 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 			info.CreatedAt.Format("02.01.2006"),
 			info.Epoch,
 		)
-		out.SetMessage(message)
+		out.
+			SetMessage(message)
 	}
 
 	return out.

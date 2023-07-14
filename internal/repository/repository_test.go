@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"test/internal/entity"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
@@ -157,23 +159,45 @@ func Test_GetReminderPhrases_SimpleCase_Success(t *testing.T) {
 	rep := Repo{db}
 
 	// create test data
-	err = db.Exec(`insert into phrases (phrase, user_id, epoch, updated_at) values
-		('test1', 100, 0, datetime('now', '-2 hours')),
-		('test2', 101, 0, datetime('now', '-2 hours')),
-		('test3', 100, 1, datetime('now', '-1 day')),
-		('test4', 101, 1, datetime('now', '-1 day')),
-		('test5', 100, 2, datetime('now', '-14 days')),
-		('test6', 101, 2, datetime('now', '-14 days')),
-		('test7', 100, 3, datetime('now', '-2 months')),
-		('test8', 101, 3, datetime('now', '-2 months')),
-		('bad1', 101, 0, datetime('now', '-1 hour')),
-		('bad2', 102, 1, datetime('now', '-20 hour')),
-		('bad3', 101, 2, datetime('now', '-2 days')),
-		('bad4', 102, 3, datetime('now', '-1 month')),
-		('bad5', 103, 1, datetime('now', '-2 hours')),
-		('bad6', 104, 2, datetime('now', '-1 day')),
-		('bad7', 105, 3, datetime('now', '-14 days')),
-		('bad8', 106, 4, datetime('now', '-2 months'));
+	err = db.Exec(`insert into phrases (phrase, user_id, epoch, created_at, updated_at) values
+		('test0', 100, 0, datetime('now', '-2 hours'), datetime('now', '-2 hours')),
+		('test1', 100, 0, datetime('now', '-3 hours'), datetime('now', '-2 hours')),
+		('test2', 101, 0, datetime('now', '-3 hours'),datetime('now', '-2 hours')),
+		('test3', 100, 1, datetime('now', '-3 hours'),datetime('now', '-1 day')),
+		('test4', 101, 1, datetime('now', '-3 hours'),datetime('now', '-1 day')),
+		('test5', 100, 2, datetime('now', '-3 hours'),datetime('now', '-14 days')),
+		('test6', 101, 2, datetime('now', '-3 hours'),datetime('now', '-14 days')),
+		('test7', 100, 3, datetime('now', '-3 hours'),datetime('now', '-2 months')),
+		('test8', 101, 3, datetime('now', '-3 hours'),datetime('now', '-2 months')),
+		('test9', 102, 3, datetime('now', '-3 hours'),datetime('now', '-2 months')),
+		('test10', 102, 0, datetime('now', '-3 hours'),datetime('now', '-2 hours')),
+		('bad1', 101, 0, datetime('now', '-3 hours'),datetime('now', '-1 hour')),
+		('bad2', 102, 1, datetime('now', '-3 hours'),datetime('now', '-20 hour')),
+		('bad3', 101, 2, datetime('now', '-3 hours'),datetime('now', '-2 days')),
+		('bad4', 102, 3, datetime('now', '-3 hours'),datetime('now', '-1 month')),
+		('bad5', 103, 1, datetime('now', '-3 hours'),datetime('now', '-2 hours')),
+		('bad6', 104, 2, datetime('now', '-3 hours'),datetime('now', '-1 day')),
+		('bad7', 105, 3, datetime('now', '-3 hours'),datetime('now', '-14 days')),
+		('bad8', 106, 4, datetime('now', '-3 hours'),datetime('now', '-2 months'));
+	`).Error
+	assert.NoError(t, err)
+
+	// add session data
+	err = db.Exec(`
+	insert into sessions (user_id, current_page, last_msg_id, chat_id, current_phrase_num, current_day, "data")
+	values 
+	(100, 'base', 1, 1, 1, 7, '{}'),
+	(101, 'base', 1, 1, 2, 7, '{}'),
+	(102, 'base', 1, 1, 1, 7, '{}');
+	`).Error
+	assert.NoError(t, err)
+
+	// add user settings data
+	err = db.Exec(`
+	insert into user_settings(user_id, phrase_day_limit) values 
+	(100, 2),
+	(101, 2),
+	(102, 2);
 	`).Error
 	assert.NoError(t, err)
 
@@ -182,7 +206,7 @@ func Test_GetReminderPhrases_SimpleCase_Success(t *testing.T) {
 	// check it
 	phrases, err := rep.GetReminderPhrases(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, phrases, 8)
+	assert.Len(t, phrases, 7)
 
 	strs := []string{}
 	for _, ph := range phrases {
@@ -190,8 +214,51 @@ func Test_GetReminderPhrases_SimpleCase_Success(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, strs, []string{
-		"test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8",
+		"test7", "test9", "test5", "test3", "test0", "test1", "test10",
 	})
+}
+
+func Test_FilterUsersByPhrasesLimit_Success(t *testing.T) {
+	db, err := getTestDB()
+	assert.NoError(t, err)
+
+	defer removeDB()
+
+	rep := Repo{db}
+
+	curDay := time.Now().UTC().Day()
+	beforeDay := time.Now().Add(-24 * time.Hour).UTC().Day()
+
+	// add session data
+	err = db.Exec(
+		fmt.Sprintf(`
+	insert into sessions (user_id, current_page, last_msg_id, chat_id, current_phrase_num, current_day, "data")
+	values 
+	(100, 'base', 1, 1, 1, %d, '{}'),
+	(101, 'base', 1, 1, 2, %d, '{}'),
+	(102, 'base', 1, 1, 1, %d, '{}'),
+	(103, 'base', 1, 1, 1, %d, '{}'),
+	(104, 'base', 1, 1, 1, %d, '{}');
+	`, beforeDay, curDay, beforeDay, curDay, beforeDay)).Error
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+
+	err = rep.ClearUsersDayLimits(ctx)
+	assert.NoError(t, err)
+
+	ss, err := rep.GetSessions(ctx, []int64{100, 101, 102, 103, 104})
+	assert.NoError(t, err)
+	for _, s := range ss {
+		assert.Equal(t, curDay, s.CurrentDay)
+
+		if s.UserID == 100 ||
+			s.UserID == 102 ||
+			s.UserID == 104 {
+			assert.Equal(t, 0, s.CurrentPhraseNum)
+		}
+	}
+
 }
 
 func Test_SaveSettings_Not_Found_Fail(t *testing.T) {
@@ -204,26 +271,12 @@ func Test_SaveSettings_Not_Found_Fail(t *testing.T) {
 
 	ctx := context.Background()
 
-	sets := entity.Settings{
-		Langs: []entity.LangSettings{
-			{
-				LangID:    0,
-				PhraseNum: 3,
-			},
-			{
-				LangID:    1,
-				PhraseNum: 4,
-			},
-			{
-				LangID:    2,
-				PhraseNum: 5,
-			},
-		},
+	sets := entity.UserSettings{
+		UserID:         123,
+		PhraseDayLimit: 3,
 	}
-	serialisedSets, err := sets.Serialize()
-	assert.NoError(t, err)
 
-	err = rep.SaveSettings(ctx, 123, serialisedSets)
+	err = rep.SaveSettings(ctx, sets)
 	assert.NoError(t, err)
 
 	// check it
@@ -242,41 +295,19 @@ func Test_SaveSettings_SimpleCase_Success(t *testing.T) {
 
 	ctx := context.Background()
 
-	sets := entity.Settings{
-		Langs: []entity.LangSettings{
-			{
-				LangID:    0,
-				PhraseNum: 3,
-			},
-			{
-				LangID:    1,
-				PhraseNum: 4,
-			},
-			{
-				LangID:    2,
-				PhraseNum: 5,
-			},
-		},
+	sets := entity.UserSettings{
+		UserID:         123,
+		PhraseDayLimit: 3,
 	}
-	serialisedSets, err := sets.Serialize()
-	assert.NoError(t, err)
 
-	err = rep.SaveSettings(ctx, 123, serialisedSets)
+	err = rep.SaveSettings(ctx, sets)
 	assert.NoError(t, err)
 
 	// check it
 	gSerSets, err := rep.GetSettings(ctx, 123)
 	assert.NoError(t, err)
 
-	gSets, err := entity.DeserializeSettings(gSerSets)
-	assert.NoError(t, err)
-
-	assert.Len(t, sets.Langs, 3)
-
-	for i := range sets.Langs {
-		assert.Equal(t, sets.Langs[i].LangID, gSets.Langs[i].LangID)
-		assert.Equal(t, sets.Langs[i].PhraseNum, gSets.Langs[i].PhraseNum)
-	}
+	assert.Equal(t, &sets, gSerSets)
 }
 
 func Test_SaveSession_SimpleCase_Success(t *testing.T) {

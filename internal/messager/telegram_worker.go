@@ -21,6 +21,8 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 		return nil
 	}
 
+	// set one output = one user
+	// first output will be output with the earliest created_at and the least epoch
 	userIDs := make([]int64, 0, len(outs))
 	outMap := make(map[int64]entity.Output, len(outs))
 	for _, out := range outs {
@@ -71,6 +73,24 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 			response.ReplyMarkup = *keyboard
 		}
 
+		// delete keyboard from last message
+		if session.LastMsgHasKbd {
+			previous := tgbotapi.NewEditMessageReplyMarkup(
+				session.ChatID,
+				session.LastMsgID,
+				tgbotapi.InlineKeyboardMarkup{
+					InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{},
+				},
+			)
+			_, err = p.bot.Send(previous)
+			if err != nil {
+				log.Println("error sending clear previous msg")
+
+				return err
+			}
+		}
+
+		// send new message
 		mess, err := p.bot.Send(response)
 		if err != nil {
 			log.Println("error sending msg")
@@ -87,6 +107,12 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 		session.LastMsgID = mess.MessageID
 		// save current page name
 		session.CurrentPage = workerPage.Name
+
+		if keyboard != nil {
+			session.LastMsgHasKbd = true
+		} else {
+			session.LastMsgHasKbd = false
+		}
 
 		// save session
 		if err := p.repo.SaveSession(ctx, *session); err != nil {

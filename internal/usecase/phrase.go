@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"test/internal/entity"
+	"test/internal/metrics"
 )
 
 func (u *Uc) CreatePhrase(ctx context.Context, userID int64, phrase string) error {
@@ -43,6 +44,16 @@ func (u *Uc) UpdatePhrase(ctx context.Context, userID int64, phrase string, sent
 
 	if obj == nil {
 		return fmt.Errorf("phrase for update not found: %s", phrase)
+	}
+
+	// send epoch mitrics
+	switch obj.Epoch {
+	case 1:
+		metrics.WordsPhraseEpoch1.Inc()
+	case 2:
+		metrics.WordsPhraseEpoch2.Inc()
+	case 3:
+		metrics.WordsPhraseEpoch3.Inc()
 	}
 
 	obj.Epoch++

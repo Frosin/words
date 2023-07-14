@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"test/internal/entity"
-	"test/internal/usecase"
+	"test/internal/metrics"
 
 	"context"
 )
@@ -14,8 +14,7 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 
 	out := input.CreateOutput()
 
-	switch {
-	case data.Type == entity.DataTypeMsg && data.Content != "/start":
+	if data.Type == entity.DataTypeMsg && data.Content != "/start" {
 		ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 		defer cancel()
 
@@ -24,18 +23,13 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 		}
 
 		answer = "phrase successfully added"
-
-	case data.Type == entity.DataTypeMsg && data.Content == "/start":
-		// create settings for user
-		ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
-		defer cancel()
-
-		h.uc.SetPhrasesNum(ctx, input.GetUserID(), usecase.DefaultPhrasesNum)
+		// send metric
+		metrics.WordsPhraseAdded.Inc()
 	}
 
 	return out.
 		SetMessage(answer).
 		SetKeyboard(input.GetKeyboard()).
 		SetUserID(input.GetUserID()).
-		SetCache(input.GetCache())
+		SetCache(entity.NewSessionData())
 }

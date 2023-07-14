@@ -13,12 +13,16 @@ var (
 		"yadisk_token": "test2"
 	}`
 
-	testFile = "test.json"
+	testFile = "../test.json"
 )
 
 func Test_InitConfig_DefaultFileName(t *testing.T) {
+	err := os.WriteFile(defaultConfigFile, []byte(data), 777)
+	assert.NoError(t, err)
+	defer os.Remove(defaultConfigFile)
+
 	sc := SConfig{}
-	err := sc.initConfig("")
+	err = sc.initConfig("")
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, sc.BotToken)

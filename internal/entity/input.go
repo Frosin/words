@@ -5,14 +5,19 @@ type InputObject struct {
 	kbd    Keyboard
 	userID int64
 	cache  SessionData
+	// fields for session
+	currentPhraseNum int
+	currentDay       int
 }
 
-func NewInput(data Data, kbd Keyboard, userID int64, cache SessionData) Input {
+func NewInput(data Data, kbd Keyboard, userID int64, cache SessionData, currentPhraseNum, currentDay int) Input {
 	return &InputObject{
-		data:   data,
-		kbd:    kbd,
-		userID: userID,
-		cache:  cache,
+		data:             data,
+		kbd:              kbd,
+		userID:           userID,
+		cache:            cache,
+		currentPhraseNum: currentPhraseNum,
+		currentDay:       currentDay,
 	}
 }
 
@@ -34,4 +39,12 @@ func (i *InputObject) CreateOutput() Output {
 
 func (i *InputObject) GetCache() SessionData {
 	return i.cache
+}
+
+func (i *InputObject) GetCurrentPhraseNum() int {
+	return i.currentPhraseNum
+}
+
+func (i *InputObject) GetCurrentDay() int {
+	return i.currentDay
 }

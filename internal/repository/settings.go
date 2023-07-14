@@ -14,12 +14,7 @@ const (
 	settingsTable = "user_settings"
 )
 
-func (r *Repo) SaveSettings(ctx context.Context, userID int64, settings []byte) error {
-	userSettings := entity.UserSettings{
-		UserID:   userID,
-		Settings: settings,
-	}
-
+func (r *Repo) SaveSettings(ctx context.Context, userSettings entity.UserSettings) error {
 	if err := r.db.WithContext(ctx).Table(settingsTable).Save(&userSettings).Error; err != nil {
 		return fmt.Errorf("SaveSettings: %w", err)
 	}
@@ -27,7 +22,7 @@ func (r *Repo) SaveSettings(ctx context.Context, userID int64, settings []byte) 
 	return nil
 }
 
-func (r *Repo) GetSettings(ctx context.Context, userID int64) ([]byte, error) {
+func (r *Repo) GetSettings(ctx context.Context, userID int64) (*entity.UserSettings, error) {
 	var settings entity.UserSettings
 
 	err := r.db.WithContext(ctx).
@@ -44,5 +39,5 @@ func (r *Repo) GetSettings(ctx context.Context, userID int64) ([]byte, error) {
 		return nil, err
 	}
 
-	return settings.Settings, nil
+	return &settings, nil
 }

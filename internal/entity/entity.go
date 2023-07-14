@@ -12,6 +12,8 @@ type (
 		GetUserID() int64
 		GetData() Data
 		GetCache() SessionData
+		GetCurrentPhraseNum() int
+		GetCurrentDay() int
 
 		CreateOutput() Output
 	}
@@ -24,6 +26,8 @@ type (
 		SetUserID(userID int64) Output
 		SetCache(cache SessionData) Output
 		SetGoToStart() Output
+		SetCurrentPhraseNum(num int) Output
+		SetCurrentDay(day int) Output
 
 		GetError() error
 		GetKeyboard() Keyboard
@@ -31,6 +35,8 @@ type (
 		GetUserID() int64
 		GetCache() SessionData
 		GetGoToStart() bool
+		GetCurrentPhraseNum() int
+		GetCurrentDay() int
 	}
 
 	Handler       func(Input) Output
@@ -107,10 +113,6 @@ var (
 	ErrDataCmd = errors.New("data cmd not found")
 )
 
-// func (d Duration) MarshalJSON() ([]byte, error) {
-// 	return json.Marshal(time.Duration(d).String())
-// }
-
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -126,30 +128,3 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
-
-// func CreateMsgCmdContent(handlerName, cmd string) string {
-// 	return strings.Join([]string{handlerName, cmd}, ":")
-// }
-
-// func (d Data) GetHandlerName() (string, error) {
-// 	in := strings.Index(d.Content, ":")
-// 	if in == -1 {
-// 		return d.Content, nil
-// 	}
-
-// 	return d.Content[:in], nil
-// }
-
-// func (d Data) GetCmd() (string, error) {
-// 	in := strings.Index(d.Content, ":")
-// 	if in == -1 {
-// 		return "", ErrDataCmd
-// 	}
-
-// 	return d.Content[in+1:], nil
-// }
-
-// func HasCmd(handler string) bool {
-// 	return -1 != strings.Index(handler, ":")
-
-// }

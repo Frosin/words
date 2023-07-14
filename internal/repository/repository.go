@@ -2,9 +2,7 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"log"
-	"os"
 	"test/internal/entity"
 	"test/internal/service"
 
@@ -17,12 +15,13 @@ type Repository interface {
 	GetPhrase(ctx context.Context, userID int64, phrase string) (*entity.Phrase, error)
 	SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, error)
 
-	SaveSettings(ctx context.Context, userID int64, settings []byte) error
-	GetSettings(ctx context.Context, userID int64) ([]byte, error)
+	SaveSettings(ctx context.Context, userSettings entity.UserSettings) error
+	GetSettings(ctx context.Context, userID int64) (*entity.UserSettings, error)
 
 	GetSession(ctx context.Context, userID int64) (*entity.Session, error)
 	GetSessions(ctx context.Context, userIDs []int64) ([]*entity.Session, error)
 	SaveSession(ctx context.Context, session entity.Session) error
+	ClearUsersDayLimits(ctx context.Context) error
 }
 
 type Repo struct {
@@ -30,24 +29,24 @@ type Repo struct {
 }
 
 func NewRepository(sc service.ServiceConfig) Repository {
-	var notExist bool
+	//var notExist bool
 	fileName := sc.GetDBFileName()
 
-	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		notExist = true
-	}
+	// if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
+	// 	notExist = true
+	// }
 
 	db, err := gorm.Open(sqlite.Open(fileName), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if notExist {
-		db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
-		if err != nil {
-			log.Fatal(err)
-		}
+	//if notExist {
+	db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
+	if err != nil {
+		log.Fatal(err)
 	}
+	//}
 
 	repo := &Repo{
 		db: db,
