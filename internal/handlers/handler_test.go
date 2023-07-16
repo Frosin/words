@@ -12,7 +12,7 @@ import (
 func Test_GetHandlers(t *testing.T) {
 	serviceCfg := service.SConfig{}
 	repo := repository.NewRepository(&serviceCfg)
-	uc := usecase.NewUsecase(repo)
+	uc := usecase.NewUsecase(repo, nil)
 	h := NewHandlers(uc, &serviceCfg)
 
 	handlers, workerhandlers := h.GetHandlers()

@@ -26,7 +26,10 @@ func main() {
 
 	repo := repository.NewRepository(serviceConfig)
 
-	usecase := usecase.NewUsecase(repo)
+	dumper := backup.NewDumper(createDumpFunction(serviceConfig), nil)
+	dumper.Start()
+
+	usecase := usecase.NewUsecase(repo, dumper)
 
 	botConfig := config.NewBotConfig(serviceConfig, usecase)
 
@@ -36,9 +39,6 @@ func main() {
 	scheduler.Run()
 
 	metrics.RunMetrics()
-
-	dumper := backup.NewDumper(createDumpFunction(serviceConfig), nil)
-	dumper.Start()
 
 	err := botProcessor.RegisterAndRunTelegramBot()
 	if err != nil {

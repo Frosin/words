@@ -30,6 +30,9 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 		answer = "phrase successfully added"
 		// send metric
 		metrics.WordsPhraseAdded.Inc()
+
+		// schedule the backup
+		h.uc.ScheduleBackUp()
 	} else {
 		out.SetCache(entity.NewSessionData())
 	}
