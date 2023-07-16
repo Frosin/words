@@ -11,14 +11,6 @@ import (
 	"time"
 
 	"github.com/roylee0704/gron"
-	"github.com/roylee0704/gron/xtime"
-)
-
-var (
-	daily   = gron.Every(1 * xtime.Day)
-	weekly  = gron.Every(1 * xtime.Week)
-	monthly = gron.Every(30 * xtime.Day)
-	yearly  = gron.Every(365 * xtime.Day)
 )
 
 type Scheduler struct {

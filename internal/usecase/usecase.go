@@ -13,6 +13,7 @@ type Usecase interface {
 	GetPhrasesDayLimit(ctx context.Context, userID int64) (int, error)
 	GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 	GetPhraseInfo(ctx context.Context, userID int64, phrase string) (*entity.Phrase, error)
+	DeletePhrase(ctx context.Context, userID int64, phrase string) error
 
 	GetSession(ctx context.Context, userID int64) (*entity.Session, error)
 	SaveSession(ctx context.Context, session entity.Session) error

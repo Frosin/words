@@ -43,6 +43,14 @@ func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, erro
 	return phrase.ID, nil
 }
 
+func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
+	if err := r.db.WithContext(ctx).Table(phrasesTable).Delete(&phrase).Error; err != nil {
+		return fmt.Errorf("DeletePhrase: %w", err)
+	}
+
+	return nil
+}
+
 // select * from phrases p
 // join sessions s on s.user_id = p.user_id
 // join user_settings us on us.user_id = p.user_id
@@ -74,6 +82,7 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 		//Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)`).
 		//Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) * 24 > 24*3)`)).
 		Where("current_phrase_num < phrase_day_limit").
+		Where("phrases.deleted_at IS NULL").
 		Order("epoch desc").
 		Order("created_at desc").
 		Scan(&phrases).Error

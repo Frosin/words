@@ -17,7 +17,7 @@ var (
 )
 
 func Test_InitConfig_DefaultFileName(t *testing.T) {
-	err := os.WriteFile(defaultConfigFile, []byte(data), 777)
+	err := os.WriteFile(defaultConfigFile, []byte(data), 0777)
 	assert.NoError(t, err)
 	defer os.Remove(defaultConfigFile)
 
@@ -30,7 +30,7 @@ func Test_InitConfig_DefaultFileName(t *testing.T) {
 }
 
 func Test_InitConfig_CustomFile(t *testing.T) {
-	err := os.WriteFile(testFile, []byte(data), 777)
+	err := os.WriteFile(testFile, []byte(data), 0777)
 	assert.NoError(t, err)
 	defer os.Remove(testFile)
 

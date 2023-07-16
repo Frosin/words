@@ -94,7 +94,11 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 		// put here request to chatGPT
 		// and add to output message gpt's sentence
 
-		h.uc.UpdatePhrase(ctx, input.GetUserID(), phrase, data.Content)
+		err := h.uc.UpdatePhrase(ctx, input.GetUserID(), phrase, data.Content)
+		if err != nil {
+			out.SetError(fmt.Errorf("update phrase info :%w", err))
+			return out
+		}
 		out.SetMessage("Предложение сохранено")
 
 		// phrases limit logic:

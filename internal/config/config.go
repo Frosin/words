@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"log"
 	"os"
 	"test/internal/entity"
@@ -19,7 +18,7 @@ func NewBotConfig(sc service.ServiceConfig, uc usecase.Usecase) Configurator {
 		log.Fatal("bot config file not found")
 	}
 
-	cfgJson, err := ioutil.ReadFile(botConfigFile)
+	cfgJson, err := os.ReadFile(botConfigFile)
 	if err != nil {
 		log.Fatal("bot config file read error")
 	}

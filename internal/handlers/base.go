@@ -22,14 +22,20 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 			out.SetError(fmt.Errorf("save phrase error :%w", err))
 		}
 
+		// add phrase to cache
+		cache := make(entity.SessionData, 1)
+		cache["phrase"] = data.Content
+		out.SetCache(cache)
+
 		answer = "phrase successfully added"
 		// send metric
 		metrics.WordsPhraseAdded.Inc()
+	} else {
+		out.SetCache(entity.NewSessionData())
 	}
 
 	return out.
 		SetMessage(answer).
-		SetKeyboard(input.GetKeyboard()).
 		SetUserID(input.GetUserID()).
-		SetCache(entity.NewSessionData())
+		SetKeyboard(input.GetKeyboard())
 }

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"os"
 	"test/internal/handlers"
 	"test/internal/service"
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 func Test_NewConfig(t *testing.T) {
-	cfgJson, err := ioutil.ReadFile("example.json")
+	cfgJson, err := os.ReadFile("example.json")
 	assert.NoError(t, err)
 
 	handlers := handlers.NewHandlers(nil, &service.SConfig{})

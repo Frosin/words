@@ -21,19 +21,19 @@ func getTestDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
+	err = db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
 	if err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	return db.Debug(), nil
 }
 
 func removeDB() {
 	_ = os.Remove(testDB)
 }
 
-func Test_SavePhrase_SimpleCase_Success(t *testing.T) {
+func Test_SavePhrase_RemovePhrase_SimpleCase_Success(t *testing.T) {
 	db, err := getTestDB()
 	assert.NoError(t, err)
 
@@ -57,11 +57,18 @@ func Test_SavePhrase_SimpleCase_Success(t *testing.T) {
 	// check it
 	phrase, err := rep.GetPhrase(ctx, 123, "test")
 	assert.NoError(t, err)
-
 	assert.Equal(t, "test", phrase.Phrase)
 	assert.Equal(t, uint8(1), phrase.Epoch)
 	assert.Equal(t, int64(123), phrase.UserID)
 	assert.Equal(t, uint8(1), phrase.LangID)
+
+	// remove phrase
+	err = rep.DeletePhrase(ctx, phrase)
+	assert.NoError(t, err)
+
+	got, err := rep.GetPhrase(ctx, 123, "test")
+	assert.NoError(t, err)
+	assert.Nil(t, got)
 }
 
 func Test_UpdatePhrase_SimpleCase_Success(t *testing.T) {

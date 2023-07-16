@@ -89,3 +89,16 @@ func (u *Uc) GetPhraseInfo(ctx context.Context, userID int64, phrase string) (*e
 
 	return obj, nil
 }
+
+func (u *Uc) DeletePhrase(ctx context.Context, userID int64, phrase string) error {
+	obj, err := u.repo.GetPhrase(ctx, userID, phrase)
+	if err != nil {
+		return err
+	}
+
+	if obj == nil {
+		return fmt.Errorf("phrase '%s' for user '%d' not found", phrase, userID)
+	}
+
+	return u.repo.DeletePhrase(ctx, obj)
+}

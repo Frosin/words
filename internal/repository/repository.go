@@ -14,6 +14,7 @@ type Repository interface {
 	GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 	GetPhrase(ctx context.Context, userID int64, phrase string) (*entity.Phrase, error)
 	SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, error)
+	DeletePhrase(ctx context.Context, phrase *entity.Phrase) error
 
 	SaveSettings(ctx context.Context, userSettings entity.UserSettings) error
 	GetSettings(ctx context.Context, userID int64) (*entity.UserSettings, error)
@@ -42,7 +43,7 @@ func NewRepository(sc service.ServiceConfig) Repository {
 	}
 
 	//if notExist {
-	db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
+	err = db.AutoMigrate(&entity.Phrase{}, &entity.UserSettings{}, &entity.Session{})
 	if err != nil {
 		log.Fatal(err)
 	}
