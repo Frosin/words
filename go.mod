@@ -3,11 +3,13 @@ module test
 go 1.20
 
 require (
+	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/jinzhu/gorm v1.9.16
 	github.com/prometheus/client_golang v1.16.0
 	github.com/roylee0704/gron v0.0.0-20160621042432-e78485adab46
 	github.com/stretchr/testify v1.8.2
+	go.uber.org/goleak v1.2.1
 	gorm.io/datatypes v1.2.0
 	gorm.io/driver/sqlite v1.5.0
 	gorm.io/gorm v1.25.0
