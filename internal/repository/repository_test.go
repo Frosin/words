@@ -220,9 +220,9 @@ func Test_GetReminderPhrases_SimpleCase_Success(t *testing.T) {
 		strs = append(strs, ph.Phrase)
 	}
 
-	assert.ElementsMatch(t, strs, []string{
-		"test7", "test9", "test5", "test3", "test0", "test1", "test10",
-	})
+	assert.Equal(t, []string{
+		"test0", "test1", "test10", "test3", "test5", "test7", "test9",
+	}, strs)
 }
 
 func Test_FilterUsersByPhrasesLimit_Success(t *testing.T) {

@@ -83,7 +83,7 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 		//Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) * 24 > 24*3)`)).
 		Where("current_phrase_num < phrase_day_limit").
 		Where("phrases.deleted_at IS NULL").
-		Order("epoch desc").
+		Order("epoch asc").
 		Order("created_at desc").
 		Scan(&phrases).Error
 
