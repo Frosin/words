@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"test/internal/entity"
+	"test/internal/metrics"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"gorm.io/gorm/logger"
@@ -65,6 +67,8 @@ func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
 func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error) {
 	phrases := []*entity.Phrase{}
 
+	start := time.Now()
+
 	err := r.db.Debug().WithContext(ctx).
 		Table(phrasesTable).
 		Joins("join sessions s on s.user_id = phrases.user_id").
@@ -90,6 +94,9 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 	if err != nil {
 		return nil, fmt.Errorf("GetReminderPhrases: %w", err)
 	}
+
+	elapsed := time.Since(start).Milliseconds()
+	metrics.WordsGetPhrasesRequest.Set(float64(elapsed))
 
 	return phrases, nil
 }

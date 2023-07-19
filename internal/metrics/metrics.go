@@ -39,4 +39,11 @@ var (
 			Help: "user add some text with phrase 3 epoch",
 		},
 	)
+
+	WordsGetPhrasesRequest = service.NewGauge(
+		GaugeOpts{
+			Name: "word_get_phrase_req",
+			Help: "get phrases request elapsed time",
+		},
+	)
 )
