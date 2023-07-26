@@ -19,6 +19,11 @@ const (
 func (r *Repo) GetPhrase(ctx context.Context, userID int64, phrase string) (*entity.Phrase, error) {
 	obj := entity.Phrase{}
 
+	defer func(begin time.Time) {
+		delta := time.Since(begin).Seconds()
+		metrics.WordsRequestDuration.WithLabelValues("get_phrase").Observe(delta)
+	}(time.Now())
+
 	err := r.db.WithContext(ctx).
 		Table(phrasesTable).
 		Where("phrase = ?", phrase).
@@ -38,6 +43,11 @@ func (r *Repo) GetPhrase(ctx context.Context, userID int64, phrase string) (*ent
 }
 
 func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, error) {
+	defer func(begin time.Time) {
+		delta := time.Since(begin).Seconds()
+		metrics.WordsRequestDuration.WithLabelValues("save_phrases").Observe(delta)
+	}(time.Now())
+
 	if err := r.db.WithContext(ctx).Table(phrasesTable).Save(&phrase).Error; err != nil {
 		return 0, fmt.Errorf("SavePhrase: %w", err)
 	}
@@ -46,6 +56,11 @@ func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, erro
 }
 
 func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
+	defer func(begin time.Time) {
+		delta := time.Since(begin).Seconds()
+		metrics.WordsRequestDuration.WithLabelValues("delete_phrase").Observe(delta)
+	}(time.Now())
+
 	if err := r.db.WithContext(ctx).Table(phrasesTable).Delete(&phrase).Error; err != nil {
 		return fmt.Errorf("DeletePhrase: %w", err)
 	}
@@ -67,7 +82,10 @@ func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
 func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error) {
 	phrases := []*entity.Phrase{}
 
-	start := time.Now()
+	defer func(begin time.Time) {
+		delta := time.Since(begin).Seconds()
+		metrics.WordsRequestDuration.WithLabelValues("get_phrases").Observe(delta)
+	}(time.Now())
 
 	err := r.db.Debug().WithContext(ctx).
 		Table(phrasesTable).
@@ -75,12 +93,12 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 		Joins("join user_settings us on us.user_id = phrases.user_id").
 		// for tests
 		Where(
-			r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
-														Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`). // after 1 day
-														Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).      // after 2 weeks
-														Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`)).     // after 2 months
-		// r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
-		// 	Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) > 0.0004)`)).
+			// r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
+			// 											Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`). // after 1 day
+			// 											Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).      // after 2 weeks
+			// 											Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`)).     // after 2 months
+			r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
+				Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) > 0.0002)`)).
 		//
 		//Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`).
 		//Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)`).
@@ -95,13 +113,15 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 		return nil, fmt.Errorf("GetReminderPhrases: %w", err)
 	}
 
-	elapsed := time.Since(start).Milliseconds()
-	metrics.WordsGetPhrasesRequest.Set(float64(elapsed))
-
 	return phrases, nil
 }
 
 func (r *Repo) ClearUsersDayLimits(ctx context.Context) error {
+	defer func(begin time.Time) {
+		delta := time.Since(begin).Seconds()
+		metrics.WordsRequestDuration.WithLabelValues("clear_limits").Observe(delta)
+	}(time.Now())
+
 	err := r.db.Debug().WithContext(ctx).
 		Exec(`
 		update sessions 

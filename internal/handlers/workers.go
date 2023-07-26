@@ -30,12 +30,24 @@ func (h *Handlers) Reminder(worker entity.Worker) ([]entity.Output, error) {
 	for _, uph := range userPhrases {
 		out := entity.NewOutput()
 
+		sentences, err := getSentences(uph)
+		if err != nil {
+			return nil, fmt.Errorf("GetReminderPhrases getSentences error: %w", err)
+		}
+
 		msg := fmt.Sprintf(remindMsgtemplate, uph.Phrase)
 
-		// kbd := worker.PageEntity.StartKeyboard
-		// if len(kbd.Buttons) != 1 {
-		// 	return nil, fmt.Errorf("reminder keyboard has invalid num of btns")
-		// }
+		if len(sentences) > 0 {
+			msg += "\nУже сохраненные предложения:\n"
+			for i, sen := range sentences {
+				msg += fmt.Sprintf("%d. %s\n", i+1, sen)
+			}
+		}
+
+		kbd := worker.PageEntity.StartKeyboard
+		if len(kbd.Buttons) != 1 {
+			return nil, fmt.Errorf("reminder keyboard has invalid num of btns")
+		}
 
 		// // add cmd(phrase) to handler
 		// kbd.Buttons[0].Handler = entity.CreateMsgCmdContent(kbd.Buttons[0].Handler, uph.Phrase)
@@ -44,7 +56,7 @@ func (h *Handlers) Reminder(worker entity.Worker) ([]entity.Output, error) {
 		cache["phrase"] = uph.Phrase
 
 		out.SetMessage(msg).
-			//SetKeyboard(kbd).
+			SetKeyboard(kbd).
 			SetUserID(uph.UserID).
 			SetCache(cache)
 
@@ -52,6 +64,19 @@ func (h *Handlers) Reminder(worker entity.Worker) ([]entity.Output, error) {
 	}
 
 	return outs, nil
+}
+
+func getSentences(ph *entity.Phrase) ([]string, error) {
+	if ph == nil {
+		return nil, nil
+	}
+
+	meta, err := entity.DeserializePhraseMeta(ph.Meta)
+	if err != nil {
+		return nil, err
+	}
+
+	return meta.Sentences, nil
 }
 
 func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
@@ -117,8 +142,10 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 			out.SetCurrentPhraseNum(sessCurWordsNum + 1)
 		}
 
+		// go to first page next time
+		out.SetGoToStart()
+
 	case entity.DataTypeCmd:
-		// create settings for user
 		ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 		defer cancel()
 
@@ -141,6 +168,5 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 	return out.
 		SetKeyboard(kbd).
 		SetUserID(input.GetUserID()).
-		SetGoToStart().
 		SetCache(cache)
 }

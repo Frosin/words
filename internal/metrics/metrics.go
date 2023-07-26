@@ -40,10 +40,11 @@ var (
 		},
 	)
 
-	WordsGetPhrasesRequest = service.NewGauge(
-		GaugeOpts{
+	WordsRequestDuration = service.NewHistogramVec(
+		HistogramOpts{
 			Name: "word_get_phrase_req",
 			Help: "get phrases request elapsed time",
 		},
+		[]string{"request_name"},
 	)
 )
