@@ -142,6 +142,22 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 			out.SetCurrentPhraseNum(sessCurWordsNum + 1)
 		}
 
+		// add settings button to keyboard
+
+		settingsBtnHandler, err := h.findHandler("Settings")
+		if err != nil {
+			out.SetError(err)
+			return out
+		}
+
+		settingsBtn := entity.Button{
+			Text:      "Settings",
+			Handler:   "Settings",
+			HandlerFn: settingsBtnHandler,
+		}
+
+		kbd.Buttons = append(kbd.Buttons, settingsBtn)
+
 		// go to first page next time
 		out.SetGoToStart()
 

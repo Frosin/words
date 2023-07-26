@@ -93,12 +93,13 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 		Joins("join user_settings us on us.user_id = phrases.user_id").
 		// for tests
 		Where(
-			// r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
-			// 											Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`). // after 1 day
-			// 											Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).      // after 2 weeks
-			// 											Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`)).     // after 2 months
-			r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
-				Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) > 0.0002)`)).
+			r.db.
+				Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) * 24 > 2)`). // after 2 hours
+				Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`).    // after 1 day
+				Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) > 14)`).         // after 2 weeks
+				Or(`(epoch = 3 AND (julianday('now') - julianday(updated_at)) > 60)`)).        // after 2 months
+		// r.db.Where(`(epoch = 0 AND (julianday('now') - julianday(updated_at) ) > 0.0002)`).
+		// 	Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) > 0.0002)`)).
 		//
 		//Or(`(epoch = 1 AND (julianday('now') - julianday(updated_at)) * 24 > 24)`).
 		//Or(`(epoch = 2 AND (julianday('now') - julianday(updated_at)) * 24 > 24*2)`).
