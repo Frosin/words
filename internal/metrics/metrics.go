@@ -42,8 +42,8 @@ var (
 
 	WordsRequestDuration = service.NewHistogramVec(
 		HistogramOpts{
-			Name: "word_get_phrase_req",
-			Help: "get phrases request elapsed time",
+			Name: "word_reqests_duration",
+			Help: "repository requests elapsed time",
 		},
 		[]string{"request_name"},
 	)
