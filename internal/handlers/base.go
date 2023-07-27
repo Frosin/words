@@ -14,6 +14,8 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 
 	out := input.CreateOutput()
 
+	kbd := input.GetKeyboard()
+
 	if data.Type == entity.DataTypeMsg && data.Content != "/start" {
 		ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
 		defer cancel()
@@ -35,10 +37,22 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 		h.uc.ScheduleBackUp()
 	} else {
 		out.SetCache(entity.NewSessionData())
+
+		// if we do not have phrase we should remove delete button
+		cache := input.GetCache()
+		if _, ok := cache["phrase"]; !ok {
+			if len(kbd.Buttons) != 2 {
+				out.SetError(fmt.Errorf("unexpected length of buttons: <> 2"))
+
+				return out
+			}
+
+			kbd.Buttons = kbd.Buttons[:1]
+		}
 	}
 
 	return out.
 		SetMessage(answer).
 		SetUserID(input.GetUserID()).
-		SetKeyboard(input.GetKeyboard())
+		SetKeyboard(kbd)
 }

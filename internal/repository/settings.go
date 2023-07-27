@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"test/internal/entity"
-	"test/internal/metrics"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -17,10 +16,7 @@ const (
 )
 
 func (r *Repo) SaveSettings(ctx context.Context, userSettings entity.UserSettings) error {
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("save_settings").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "save_settings")
 
 	if err := r.db.WithContext(ctx).Table(settingsTable).Save(&userSettings).Error; err != nil {
 		return fmt.Errorf("SaveSettings: %w", err)
@@ -32,10 +28,7 @@ func (r *Repo) SaveSettings(ctx context.Context, userSettings entity.UserSetting
 func (r *Repo) GetSettings(ctx context.Context, userID int64) (*entity.UserSettings, error) {
 	var settings entity.UserSettings
 
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("get_settings").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "get_settings")
 
 	err := r.db.WithContext(ctx).
 		Table(settingsTable).

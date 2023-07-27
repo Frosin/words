@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"test/internal/entity"
-	"test/internal/metrics"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -19,10 +18,7 @@ const (
 func (r *Repo) GetPhrase(ctx context.Context, userID int64, phrase string) (*entity.Phrase, error) {
 	obj := entity.Phrase{}
 
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("get_phrase").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "get_phrase")
 
 	err := r.db.WithContext(ctx).
 		Table(phrasesTable).
@@ -43,10 +39,7 @@ func (r *Repo) GetPhrase(ctx context.Context, userID int64, phrase string) (*ent
 }
 
 func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, error) {
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("save_phrases").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "save_phrases")
 
 	if err := r.db.WithContext(ctx).Table(phrasesTable).Save(&phrase).Error; err != nil {
 		return 0, fmt.Errorf("SavePhrase: %w", err)
@@ -56,10 +49,7 @@ func (r *Repo) SavePhrase(ctx context.Context, phrase entity.Phrase) (uint, erro
 }
 
 func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("delete_phrase").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "delete_phrase")
 
 	if err := r.db.WithContext(ctx).Table(phrasesTable).Delete(&phrase).Error; err != nil {
 		return fmt.Errorf("DeletePhrase: %w", err)
@@ -82,10 +72,7 @@ func (r *Repo) DeletePhrase(ctx context.Context, phrase *entity.Phrase) error {
 func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error) {
 	phrases := []*entity.Phrase{}
 
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("get_phrases").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "get_phrases")
 
 	err := r.db.Debug().WithContext(ctx).
 		Table(phrasesTable).
@@ -118,10 +105,7 @@ func (r *Repo) GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
 }
 
 func (r *Repo) ClearUsersDayLimits(ctx context.Context) error {
-	defer func(begin time.Time) {
-		delta := time.Since(begin).Seconds()
-		metrics.WordsRequestDuration.WithLabelValues("clear_limits").Observe(delta)
-	}(time.Now())
+	defer sendMetric(time.Now(), "clear_limits")
 
 	err := r.db.Debug().WithContext(ctx).
 		Exec(`

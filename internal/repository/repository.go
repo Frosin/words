@@ -4,7 +4,9 @@ import (
 	"context"
 	"log"
 	"test/internal/entity"
+	"test/internal/metrics"
 	"test/internal/service"
+	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -54,4 +56,9 @@ func NewRepository(sc service.ServiceConfig) Repository {
 	}
 
 	return repo
+}
+
+func sendMetric(begin time.Time, label string) {
+	delta := time.Since(begin).Milliseconds()
+	metrics.WordsRequestDuration.WithLabelValues(label).Observe(float64(delta))
 }
