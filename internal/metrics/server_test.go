@@ -15,7 +15,7 @@ func TestMetricsServer(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 100)
 
-	WordsOperationResults.Add(777)
+	WordsOperationResults.WithLabelValues("", "").Add(777)
 
 	client := http.Client{
 		Timeout: 1 * time.Second,

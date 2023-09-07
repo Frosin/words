@@ -225,14 +225,25 @@ func (p *Processor) RegisterAndRunTelegramBot() error {
 		log.Fatal(err)
 	}
 
+	//debug, delete it after test
+	testMap := map[int]string{
+		0: "",
+		1: "test",
+	}
+	values := []string{}
+	for _, v := range testMap {
+		values = append(values, v)
+	}
+	//
+
 	for update := range updates {
 		update := update
 		go func() {
 			if err := p.handleUpdate(update); err != nil {
-				metrics.WordsOperationResults.Set(0)
+				metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(0)
 				log.Println("ERROR", err)
 			} else {
-				metrics.WordsOperationResults.Set(1)
+				metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(1)
 			}
 		}()
 	}

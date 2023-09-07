@@ -5,11 +5,12 @@ const metricsPrefix = ""
 var service = NewMetrics().WithNamespace(metricsPrefix)
 
 var (
-	WordsOperationResults = service.NewGauge(
+	WordsOperationResults = service.NewGaugeVec(
 		GaugeOpts{
 			Name: "words_operation_results",
 			Help: "Handler and sending operations results",
 		},
+		[]string{"test_string", "test_error"},
 	)
 
 	WordsPhraseAdded = service.NewCounter(

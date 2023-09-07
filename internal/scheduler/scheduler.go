@@ -54,10 +54,19 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 		return fmt.Errorf("failed add worker: %w", err)
 	}
 
-	schedule := gron.Every(period) //.At(worker.Time)
+	schedule := gron.Every(period)
 	s.gron.AddFunc(schedule, func() {
 
-		//Do(func() {
+		//debug, delete it after test
+		testMap := map[int]string{
+			0: "",
+			1: "test",
+		}
+		values := []string{}
+		for _, v := range testMap {
+			values = append(values, v)
+		}
+		//
 
 		log.Printf("Run worker: %s\n", worker.Name)
 		outputs, err := worker.HandlerFn(worker)
@@ -71,15 +80,13 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 		err = s.processor.HandleWorker(outputs, worker)
 		if err != nil {
 			log.Printf("handle worker error: %s\n", err.Error())
-			metrics.WordsOperationResults.Set(0)
+			metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(0)
 			return
 		}
-		metrics.WordsOperationResults.Set(1)
+		metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(1)
 
 		log.Printf("Worker `%s` successfully finished\n", worker.Name)
 	})
-
-	//})
 
 	log.Printf("Scheduler worker `%s` added (%s)\n", worker.Name, worker.Period)
 
