@@ -13,7 +13,7 @@ type MessagerWorker interface {
 	HandleWorker(out entity.Output) error
 }
 
-func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) error {
+func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) []error {
 	ctx, cancel := context.WithTimeout(context.Background(), p.sc.DBTimeout())
 	defer cancel()
 
@@ -41,14 +41,16 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 
 		return nil
 	case err != nil:
-		return fmt.Errorf("worker get session error: %w", err)
+		return []error{fmt.Errorf("worker get session error: %w", err)}
 	}
 
 	// find action handler and page name for calculating
 	workerPage := p.cfg.FindPage(worker.Page)
 	if workerPage == nil {
-		return fmt.Errorf("worker page not found %s", worker.Page)
+		return []error{fmt.Errorf("worker page not found %s", worker.Page)}
 	}
+
+	errs := []error{}
 
 	for _, session := range sessions {
 		output, ok := outMap[int64(session.UserID)]
@@ -56,14 +58,16 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 			err := fmt.Errorf("not found output for user: %d", session.UserID)
 			log.Println("get output error", err)
 
-			return err
+			errs = append(errs, err)
+			continue
 		}
 
 		if err := output.GetError(); err != nil {
 			err := fmt.Errorf("worker error with data: %w", output.GetError())
 			log.Println("worker handler error", err)
 
-			return err
+			errs = append(errs, err)
+			continue
 		}
 
 		keyboard := convertKeyboard(output.GetKeyboard())
@@ -84,23 +88,28 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 			)
 			_, err = p.bot.Send(previous)
 			if err != nil {
-				log.Println("error sending clear previous msg")
+				log.Printf("error sending clear previous msg: %v: %s\n", session, err.Error())
 
-				return err
+				errs = append(errs, err)
+				continue
 			}
 		}
 
 		// send new message
 		mess, err := p.bot.Send(response)
 		if err != nil {
-			log.Println("error sending msg")
+			log.Printf("error sending msg: %s\n", err.Error())
 
-			return err
+			errs = append(errs, err)
+			continue
 		}
 
 		rawSessData, err := output.GetCache().ToRaw()
 		if err != nil {
-			return fmt.Errorf("serialize session data error: %w", err)
+			err = fmt.Errorf("serialize session data error: %w", err)
+
+			errs = append(errs, err)
+			continue
 		}
 
 		session.Data = rawSessData
@@ -116,9 +125,10 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) err
 
 		// save session
 		if err := p.repo.SaveSession(ctx, *session); err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 	}
 
-	return nil
+	return errs
 }

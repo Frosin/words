@@ -171,8 +171,7 @@ func (p *Processor) handleUpdate(update tgbotapi.Update) error {
 		)
 		_, err = p.bot.Send(previous)
 		if err != nil {
-			log.Println("error sending clear previous msg")
-
+			log.Printf("error sending clear previous msg: %v: %s\n", session, err.Error())
 			return err
 		}
 	}

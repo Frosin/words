@@ -3,6 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"log"
+	"strings"
 	"test/internal/config"
 	"test/internal/entity"
 	"test/internal/messager"
@@ -57,17 +58,6 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 	schedule := gron.Every(period)
 	s.gron.AddFunc(schedule, func() {
 
-		//debug, delete it after test
-		testMap := map[int]string{
-			0: "",
-			1: "test",
-		}
-		values := []string{}
-		for _, v := range testMap {
-			values = append(values, v)
-		}
-		//
-
 		log.Printf("Run worker: %s\n", worker.Name)
 		outputs, err := worker.HandlerFn(worker)
 		if err != nil {
@@ -77,13 +67,15 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 		}
 
 		log.Printf("Send worker outputs: %s\n", worker.Name)
-		err = s.processor.HandleWorker(outputs, worker)
-		if err != nil {
-			log.Printf("handle worker error: %s\n", err.Error())
-			metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(0)
+		errs := s.processor.HandleWorker(outputs, worker)
+		if len(errs) != 0 {
+			errData := join(errs)
+			log.Printf("handle worker errors: %s\n", errData)
+
+			metrics.WordsOperationResults.WithLabelValues("error", errData).Set(0)
 			return
 		}
-		metrics.WordsOperationResults.WithLabelValues(values[0], values[1]).Set(1)
+		metrics.WordsOperationResults.WithLabelValues("OK", "").Set(1)
 
 		log.Printf("Worker `%s` successfully finished\n", worker.Name)
 	})
@@ -93,12 +85,22 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 	return nil
 }
 
-var cnt int
+//var cnt int
 
-func Do(fn func()) {
-	if cnt == 2 {
-		return
+// func Do(fn func()) {
+// 	if cnt == 2 {
+// 		return
+// 	}
+// 	fn()
+// 	cnt++
+// }
+
+func join(errs []error) string {
+	res := make([]string, len(errs))
+
+	for _, v := range errs {
+		res = append(res, v.Error())
 	}
-	fn()
-	cnt++
+
+	return strings.Join(res, "; ")
 }

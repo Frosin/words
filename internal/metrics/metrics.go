@@ -10,7 +10,7 @@ var (
 			Name: "words_operation_results",
 			Help: "Handler and sending operations results",
 		},
-		[]string{"test_string", "test_error"},
+		[]string{"data", "error"},
 	)
 
 	WordsPhraseAdded = service.NewCounter(
