@@ -91,6 +91,16 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) []e
 				log.Printf("error sending clear previous msg: %v: %s\n", session, err.Error())
 
 				errs = append(errs, err)
+
+				//try to fix session
+				session.LastMsgHasKbd = false
+
+				if err := p.repo.SaveSession(ctx, *session); err != nil {
+					return []error{fmt.Errorf("fix and save session error: %w", err)}
+				}
+
+				log.Printf("fix session success\n")
+
 				continue
 			}
 		}
