@@ -87,16 +87,6 @@ func (u *Uc) DeletePhraseSentence(ctx context.Context, userID int64, phrase stri
 		return fmt.Errorf("phrase for update not found: %s", phrase)
 	}
 
-	// send epoch mitrics
-	switch obj.Epoch {
-	case 1:
-		metrics.WordsPhraseEpoch1.Inc()
-	case 2:
-		metrics.WordsPhraseEpoch2.Inc()
-	case 3:
-		metrics.WordsPhraseEpoch3.Inc()
-	}
-
 	meta, err := entity.DeserializePhraseMeta(obj.Meta)
 	if err != nil {
 		return fmt.Errorf("failed to deserialize phrase meta")
