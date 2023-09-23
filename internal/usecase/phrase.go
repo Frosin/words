@@ -97,8 +97,6 @@ func (u *Uc) DeletePhraseSentence(ctx context.Context, userID int64, phrase stri
 		metrics.WordsPhraseEpoch3.Inc()
 	}
 
-	obj.Epoch++
-
 	meta, err := entity.DeserializePhraseMeta(obj.Meta)
 	if err != nil {
 		return fmt.Errorf("failed to deserialize phrase meta")
@@ -115,6 +113,7 @@ func (u *Uc) DeletePhraseSentence(ctx context.Context, userID int64, phrase stri
 			meta.Sentences = meta.Sentences[:len(meta.Sentences)-1]
 
 			deleted = true
+			obj.Epoch--
 		}
 	}
 
