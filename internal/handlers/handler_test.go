@@ -16,6 +16,6 @@ func Test_GetHandlers(t *testing.T) {
 	h := NewHandlers(uc, &serviceCfg)
 
 	handlers, workerhandlers := h.GetHandlers()
-	assert.Len(t, handlers, 6)
+	assert.Len(t, handlers, 7)
 	assert.Len(t, workerhandlers, 1)
 }
