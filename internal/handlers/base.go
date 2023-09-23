@@ -8,6 +8,11 @@ import (
 	"context"
 )
 
+var (
+	phraseKey   = "phrase"
+	sentenceKey = "sentence"
+)
+
 func (h *Handlers) Base(input entity.Input) entity.Output {
 	answer := "Welcome to phrases learn bot. Write a phrase for the reminder."
 	data := input.GetData()
@@ -26,7 +31,7 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 
 		// add phrase to cache
 		cache := make(entity.SessionData, 1)
-		cache["phrase"] = data.Content
+		cache[phraseKey] = data.Content
 		out.SetCache(cache)
 
 		answer = "phrase successfully added"
@@ -40,7 +45,7 @@ func (h *Handlers) Base(input entity.Input) entity.Output {
 
 		// if we do not have phrase we should remove delete button
 		cache := input.GetCache()
-		if _, ok := cache["phrase"]; !ok {
+		if _, ok := cache[phraseKey]; !ok {
 			if len(kbd.Buttons) != 2 {
 				out.SetError(fmt.Errorf("unexpected length of buttons: <> 2"))
 

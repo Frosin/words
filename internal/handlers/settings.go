@@ -86,7 +86,7 @@ func (h *Handlers) Delete_phrase(input entity.Input) entity.Output {
 
 	cache := input.GetCache()
 
-	phraseIntf, ok := cache["phrase"]
+	phraseIntf, ok := cache[phraseKey]
 	if !ok {
 		out.SetError(fmt.Errorf("phrase not found in cache"))
 		return out

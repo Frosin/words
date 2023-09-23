@@ -10,6 +10,7 @@ import (
 type Usecase interface {
 	CreatePhrase(ctx context.Context, userID int64, phrase string) error
 	UpdatePhrase(ctx context.Context, userID int64, phrase string, sentence string) error
+	DeletePhraseSentence(ctx context.Context, userID int64, phrase string, sentence string) error
 	SetPhrasesDayLimit(ctx context.Context, userID int64, limit int) error
 	GetPhrasesDayLimit(ctx context.Context, userID int64) (int, error)
 	GetReminderPhrases(ctx context.Context) ([]*entity.Phrase, error)
