@@ -190,56 +190,56 @@ func (h *Handlers) Page_reminder(input entity.Input) entity.Output {
 		SetCache(cache)
 }
 
-func (h *Handlers) Delete_sentence(input entity.Input) entity.Output {
-	out := input.CreateOutput()
+// func (h *Handlers) Delete_sentence(input entity.Input) entity.Output {
+// 	out := input.CreateOutput()
 
-	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
-	defer cancel()
+// 	ctx, cancel := context.WithTimeout(context.Background(), h.serviceCfg.DBTimeout())
+// 	defer cancel()
 
-	cache := input.GetCache()
+// 	cache := input.GetCache()
 
-	phraseIntf, ok := cache[phraseKey]
-	if !ok {
-		out.SetError(fmt.Errorf("phrase not found in cache"))
-		return out
-	}
+// 	phraseIntf, ok := cache[phraseKey]
+// 	if !ok {
+// 		out.SetError(fmt.Errorf("phrase not found in cache"))
+// 		return out
+// 	}
 
-	phrase, ok := phraseIntf.(string)
-	if !ok {
-		out.SetError(fmt.Errorf("phrase invalid type"))
-		return out
-	}
+// 	phrase, ok := phraseIntf.(string)
+// 	if !ok {
+// 		out.SetError(fmt.Errorf("phrase invalid type"))
+// 		return out
+// 	}
 
-	sentenceIntf, ok := cache[sentenceKey]
-	if !ok {
-		out.SetError(fmt.Errorf("sentence not found in cache"))
-		return out
-	}
+// 	sentenceIntf, ok := cache[sentenceKey]
+// 	if !ok {
+// 		out.SetError(fmt.Errorf("sentence not found in cache"))
+// 		return out
+// 	}
 
-	sentence, ok := sentenceIntf.(string)
-	if !ok {
-		out.SetError(fmt.Errorf("sentence invalid type"))
-		return out
-	}
+// 	sentence, ok := sentenceIntf.(string)
+// 	if !ok {
+// 		out.SetError(fmt.Errorf("sentence invalid type"))
+// 		return out
+// 	}
 
-	err := h.uc.DeletePhraseSentence(ctx, input.GetUserID(), phrase, sentence)
-	if err != nil {
-		out.SetError(fmt.Errorf("delete phrases error :%w", err))
-	}
+// 	err := h.uc.DeletePhraseSentence(ctx, input.GetUserID(), phrase, sentence)
+// 	if err != nil {
+// 		out.SetError(fmt.Errorf("delete phrases error :%w", err))
+// 	}
 
-	msg := fmt.Sprintf("sentence '%s' deleted", sentence)
+// 	msg := fmt.Sprintf("sentence '%s' deleted", sentence)
 
-	// remove delete button
-	// because we already deleted phrase or we didn't write it yet
-	kbd := input.GetKeyboard()
-	if len(kbd.Buttons) != 2 {
-		out.SetError(fmt.Errorf("invalid num of buttons"))
-		return out
-	}
-	kbd.Buttons = kbd.Buttons[:1]
+// 	// remove delete button
+// 	// because we already deleted phrase or we didn't write it yet
+// 	kbd := input.GetKeyboard()
+// 	if len(kbd.Buttons) != 2 {
+// 		out.SetError(fmt.Errorf("invalid num of buttons"))
+// 		return out
+// 	}
+// 	kbd.Buttons = kbd.Buttons[:1]
 
-	return out.
-		SetMessage(msg).
-		SetKeyboard(kbd).
-		SetUserID(input.GetUserID())
-}
+// 	return out.
+// 		SetMessage(msg).
+// 		SetKeyboard(kbd).
+// 		SetUserID(input.GetUserID())
+// }
