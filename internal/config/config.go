@@ -32,7 +32,7 @@ func NewBotConfig(sc service.ServiceConfig, uc usecase.Usecase) Configurator {
 		log.Fatal("bot parse config error")
 	}
 
-	botCfg := newConfig(cfg, pages)
+	botCfg := newConfig(cfg, pages, handlerFns, workerHandlerFns)
 
 	return botCfg
 }

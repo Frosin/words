@@ -13,15 +13,21 @@ type Configurator interface {
 }
 
 type BotConfig struct {
-	cfg   *entity.Config
-	pages map[string]*entity.Page
+	cfg              *entity.Config
+	pages            map[string]*entity.Page
+	handlerFns       map[string]entity.Handler
+	workerHandlerFns map[string]entity.WorkerHandler
 }
 
 func newConfig(cfg *entity.Config,
-	pages map[string]*entity.Page) *BotConfig {
+	pages map[string]*entity.Page,
+	handlerFns map[string]entity.Handler,
+	workerHandlerFns map[string]entity.WorkerHandler) *BotConfig {
 	return &BotConfig{
-		cfg:   cfg,
-		pages: pages,
+		cfg:              cfg,
+		pages:            pages,
+		handlerFns:       handlerFns,
+		workerHandlerFns: workerHandlerFns,
 	}
 }
 
@@ -52,6 +58,15 @@ func (c *BotConfig) findButton(page *entity.Page, name string) *entity.Button {
 	return nil
 }
 
+func (c *BotConfig) findHandler(name string) entity.Handler {
+	handler, ok := c.handlerFns[name]
+	if !ok {
+		return nil
+	}
+
+	return handler
+}
+
 func (c *BotConfig) findHandlerPage(handlerName string) *entity.Page {
 	for _, page := range c.pages {
 		if page.Handler == handlerName {
@@ -76,9 +91,14 @@ func (c *BotConfig) FindHandler(curPage *entity.Page, data entity.Data) (entity.
 
 		p := c.findHandlerPage(handlerName)
 		if p == nil {
-			// try to find handler among buttons
+			// try to find handler among current page buttons
 			b := c.findButton(curPage, handlerName)
 			if b == nil {
+				// try to find handler among handlers
+				handler := c.findHandler(handlerName)
+				if handler != nil {
+					return handler, curPage, nil
+				}
 				// button not found
 				// it is custom button and should be handled in page handler
 				return curPage.HandlerFn, curPage, nil

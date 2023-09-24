@@ -35,7 +35,7 @@ func main() {
 
 	botProcessor := messager.NewProcessor(botConfig, repo, serviceConfig)
 
-	scheduler := scheduler.NewScheduler(usecase, botConfig, botProcessor)
+	scheduler := scheduler.NewScheduler(usecase, botConfig, botProcessor, serviceConfig.IsWorkerDebugOnce())
 	scheduler.Run()
 
 	metrics.RunMetrics()

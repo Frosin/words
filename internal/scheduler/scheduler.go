@@ -19,15 +19,18 @@ type Scheduler struct {
 	cfg       config.Configurator
 	gron      *gron.Cron
 	processor *messager.Processor
+
+	isDebugOnce bool
 }
 
-func NewScheduler(uc usecase.Usecase, cfg config.Configurator, processor *messager.Processor) *Scheduler {
+func NewScheduler(uc usecase.Usecase, cfg config.Configurator, processor *messager.Processor, debugOnce bool) *Scheduler {
 	//create scheduler object
 	s := &Scheduler{
-		uc:        uc,
-		cfg:       cfg,
-		gron:      gron.New(),
-		processor: processor,
+		uc:          uc,
+		cfg:         cfg,
+		gron:        gron.New(),
+		processor:   processor,
+		isDebugOnce: debugOnce,
 	}
 
 	// add workers
@@ -57,7 +60,6 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 
 	schedule := gron.Every(period)
 	s.gron.AddFunc(schedule, func() {
-
 		log.Printf("Run worker: %s\n", worker.Name)
 		outputs, err := worker.HandlerFn(worker)
 		if err != nil {
@@ -78,6 +80,11 @@ func (s *Scheduler) AddWorker(worker entity.Worker) error {
 		metrics.WordsOperationResults.WithLabelValues("OK", "").Set(1)
 
 		log.Printf("Worker `%s` successfully finished\n", worker.Name)
+
+		// run once and stop in debug mode
+		if s.isDebugOnce {
+			s.Stop()
+		}
 	})
 
 	log.Printf("Scheduler worker `%s` added (%s)\n", worker.Name, worker.Period)

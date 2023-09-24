@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"test/internal/entity"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -30,6 +31,13 @@ func (p *Processor) HandleWorker(outs []entity.Output, worker entity.Worker) []e
 	}
 
 	for userID := range outMap {
+		userDebug := p.sc.IsWorkerDebugUser()
+
+		if userDebug != "" &&
+			strconv.FormatInt(userID, 10) != userDebug {
+			continue
+		}
+
 		userIDs = append(userIDs, userID)
 	}
 
