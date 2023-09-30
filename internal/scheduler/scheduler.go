@@ -52,14 +52,37 @@ func (s *Scheduler) Stop() {
 	s.gron.Stop()
 }
 
+func isWorkerSleepTime(startTime, n time.Time, duration time.Duration) bool {
+	startT := time.Date(n.Year(), n.Month(), n.Day(), startTime.Hour(), startTime.Minute(), n.Second(), n.Nanosecond(), n.Location())
+	endT := startT.Add(duration)
+
+	return !(n.After(startT) && n.Before(endT))
+}
+
 func (s *Scheduler) AddWorker(worker entity.Worker) error {
 	period, err := time.ParseDuration(worker.Period)
 	if err != nil {
-		return fmt.Errorf("failed add worker: %w", err)
+		return fmt.Errorf("failed add worker, parse period: %w", err)
+	}
+
+	startTime, err := time.Parse("15:04", worker.StartTime)
+	if err != nil {
+		return fmt.Errorf("failed add worker, parse startTime: %w", err)
+	}
+
+	duration, err := time.ParseDuration(worker.Duration)
+	if err != nil {
+		return fmt.Errorf("failed add worker, parse duration: %w", err)
 	}
 
 	schedule := gron.Every(period)
 	s.gron.AddFunc(schedule, func() {
+		if isWorkerSleepTime(startTime, time.Now(), duration) {
+			log.Printf("worker sleep time, skip\n")
+
+			return
+		}
+
 		log.Printf("Run worker: %s\n", worker.Name)
 		outputs, err := worker.HandlerFn(worker)
 		if err != nil {

@@ -43,10 +43,10 @@ type (
 	WorkerHandler func(Worker) ([]Output, error)
 
 	Config struct {
-		Pages      []Page      `json:"pages"`
-		Workers    []Worker    `json:"workers"`
-		Schedulers []Scheduler `json:"schedulers"`
-		FirstPage  *Page
+		Pages   []Page   `json:"pages"`
+		Workers []Worker `json:"workers"`
+		//Schedulers []Scheduler `json:"schedulers"`
+		FirstPage *Page
 	}
 
 	Button struct {
@@ -73,7 +73,8 @@ type (
 	Worker struct {
 		Name          string `json:"name"`
 		Period        string `json:"period"`
-		Time          string `json:"time"`
+		StartTime     string `json:"start_time"`
+		Duration      string `json:"duration"`
 		WorkerHandler string `json:"worker_handler"`
 		Page          string `json:"page"`
 
@@ -81,13 +82,13 @@ type (
 		HandlerFn  WorkerHandler
 	}
 
-	Scheduler struct {
-		Name    string   `json:"name"`
-		Handler string   `json:"handler"`
-		Period  Duration `json:"period"`
+	// Scheduler struct {
+	// 	Name    string   `json:"name"`
+	// 	Handler string   `json:"handler"`
+	// 	Period  Duration `json:"period"`
 
-		HandlerFn Handler
-	}
+	// 	HandlerFn Handler
+	// }
 
 	User struct {
 		ID     int `json:"id"`
